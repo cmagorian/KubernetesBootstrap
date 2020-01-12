@@ -134,10 +134,10 @@ if [[ $EUID -ne 0 ]]; then
    exit 1
 fi
 
-#validate_environment
-#fetch_dependencies
+validate_environment
+fetch_dependencies
 # - install tools
-#install_verify_dependencies
+install_verify_dependencies
 
 parse_args "$@"
 
