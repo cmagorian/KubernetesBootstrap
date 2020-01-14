@@ -6,40 +6,25 @@
 # Author: Chris Magorian
 #
 
+set -e
+
 # Variables
 
 TYPE=""
-HOST_ADDRESS=""
+CONTROL_PLANE_IP=""
+CONTROL_PLANE_PORT=""
 JOIN_TOKEN=""
 JOIN_TOKEN_CERT_HASH=""
 
 # Functions
 
-validate_environment() {
-  OS=$(awk -F= '$1=="ID" { print $2 ;}' /etc/os-release)
-  case $OS in
-    debian | ubuntu)
-      update-alternatives --set iptables /usr/sbin/iptables-legacy
-      update-alternatives --set ip6tables /usr/sbin/ip6tables-legacy
-      update-alternatives --set arptables /usr/sbin/arptables-legacy
-      update-alternatives --set ebtables /usr/sbin/ebtables-legacy
-      return
-      ;;
-    *)
-      printf "KubernetesBootstrap isn't written to setup a %s environment... \n" "$OS"
-      exit 1
-      ;;
-  esac
-  return
-}
-
 fetch_dependencies() {
   apt-get update && apt-get install -y apt-transport-https curl \
       apt-transport-https ca-certificates curl software-properties-common gnupg2
   curl -s https://packages.cloud.google.com/apt/doc/apt-key.gpg | apt-key add -
-  cat "<<EOF | sudo tee /etc/apt/sources.list.d/kubernetes.list
+  cat <<EOF | tee /etc/apt/sources.list.d/kubernetes.list
   deb https://apt.kubernetes.io/ kubernetes-xenial main
-  EOF"
+EOF
   curl -fsSL https://download.docker.com/linux/debian/gpg | apt-key add -
   add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/debian $(lsb_release -cs) stable"
   apt-get update
@@ -48,7 +33,6 @@ fetch_dependencies() {
 install_verify_dependencies() {
   if [[ $(command -v docker) == "" ]]; then
     apt install docker-ce
-    systemctl status docker
   fi
 
   if [[ $(command -v kubelet) == "" ]]; then
@@ -79,7 +63,19 @@ parse_args() {
         shift 2
         ;;
       -H|--hostIp)
-        HOST_ADDRESS=$2
+        CONTROL_PLANE_IP=$2
+        shift 2
+        ;;
+      -P|--port)
+        CONTROL_PLANE_PORT=$2
+        shift 2
+        ;;
+      -T|--token)
+        JOIN_TOKEN=$2
+        shift 2
+        ;;
+      -C|--ca-cert)
+        JOIN_TOKEN_CERT_HASH=$2
         shift 2
         ;;
       --)
@@ -98,6 +94,37 @@ parse_args() {
   done
 
   eval set -- "$PARAMS"
+
+  if [[ $TYPE == "worker" ]]; then
+    if [[ $CONTROL_PLANE_IP == "" ]]; then
+      printf "No control_plane_ip provided, please set with --hostIp (-H) \n"
+      exit 1
+    fi
+
+    if [[ $CONTROL_PLANE_PORT == "" ]]; then
+      printf "No control_plane_port provided, please set with --port (-P) \n"
+      exit 1
+    fi
+
+    if [[ $JOIN_TOKEN == "" ]]; then
+      printf "No join_token provided, please set with --token (-T) \n"
+      exit 1
+    fi
+
+    if [[ $JOIN_TOKEN_CERT_HASH == "" ]]; then
+      printf "No join_token provided, please set with --token (-T) \n"
+      exit 1
+    fi
+  fi
+}
+
+setup_worker() {
+  kubeadm join "$CONTROL_PLANE_IP":"$CONTROL_PLANE_PORT" --token "$JOIN_TOKEN" \
+    --discovery-token-ca-cert-hash sha256:"$JOIN_TOKEN_CERT_HASH"
+}
+
+setup_host() {
+  kubeadm init
 }
 
 setup() {
@@ -110,13 +137,12 @@ setup() {
   case $TYPE in
     host)
       printf "Setting up as a cluster host \n"
-      # call the host setup here
+      setup_host
       exit 0
       ;;
     worker)
       printf "Setting up as a cluster node \n"
-      # call the join commands here
-      printf "Host address: %s \n" "$HOST_ADDRESS"
+      setup_worker
       exit 0
       ;;
     *)
@@ -134,12 +160,12 @@ if [[ $EUID -ne 0 ]]; then
    exit 1
 fi
 
-validate_environment
+# fetch deps
 fetch_dependencies
+
 # - install tools
 install_verify_dependencies
 
-parse_args "$@"
-
 # - determine `host` or `worker`
+parse_args "$@"
 setup
