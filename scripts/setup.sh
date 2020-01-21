@@ -34,6 +34,20 @@ install_verify_dependencies() {
   if [[ $(command -v docker) == "" ]]; then
     printf "Setting up Docker \n"
     curl -sSL https://get.docker.com | sh -y
+    cat > /etc/docker/daemon.json <<EOF
+    {
+      "exec-opts": ["native.cgroupdriver=systemd"],
+      "log-driver": "json-file",
+      "log-opts": {
+        "max-size": "100m"
+      },
+      "storage-driver": "overlay2"
+    }
+EOF
+  mkdir -p /etc/systemd/system/docker.service.d
+
+  systemctl daemon-reload
+  systemcl restart docker
   fi
 
   if [[ $(command -v kubelet) == "" ]]; then
