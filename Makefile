@@ -1,5 +1,7 @@
 SCRIPTS_PATH=scripts
 
+.PHONY: validate setup host
+
 all: validate setup
 
 validate:

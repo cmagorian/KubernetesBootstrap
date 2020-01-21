@@ -25,15 +25,13 @@ fetch_dependencies() {
   cat <<EOF | tee /etc/apt/sources.list.d/kubernetes.list
   deb https://apt.kubernetes.io/ kubernetes-xenial main
 EOF
-  curl -fsSL https://download.docker.com/linux/debian/gpg | apt-key add -
-  add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/debian $(lsb_release -cs) stable"
   apt-get update
 }
 
 install_verify_dependencies() {
   if [[ $(command -v docker) == "" ]]; then
     printf "Setting up Docker \n"
-    curl -sSL https://get.docker.com | sh -y
+    curl -sSL https://get.docker.com | sh
     cat > /etc/docker/daemon.json <<EOF
     {
       "exec-opts": ["native.cgroupdriver=systemd"],
@@ -85,7 +83,7 @@ parse_args() {
         CONTROL_PLANE_PORT=$2
         shift 2
         ;;
-      -T|--token)
+      -J|--join_token)
         JOIN_TOKEN=$2
         shift 2
         ;;
@@ -122,7 +120,7 @@ parse_args() {
     fi
 
     if [[ $JOIN_TOKEN == "" ]]; then
-      printf "No join_token provided, please set with --token (-T) \n"
+      printf "No join_token provided, please set with --join_token (-J) \n"
       exit 1
     fi
 
@@ -139,6 +137,7 @@ setup_worker() {
 }
 
 setup_host() {
+  kubeadm config images pull
   kubeadm init
 }
 
@@ -175,12 +174,14 @@ if [[ $EUID -ne 0 ]]; then
    exit 1
 fi
 
+# - determine `host` or `worker`
+parse_args "$@"
+
 # fetch deps
 fetch_dependencies
 
-# - install tools
+# install tools
 install_verify_dependencies
 
-# - determine `host` or `worker`
-parse_args "$@"
+# run setup
 setup
