@@ -1,8 +1,11 @@
 SCRIPTS_PATH=scripts
 
-.PHONY: validate setup host
+.PHONY: validate setup host clean
 
 all: validate setup
+
+build:
+	go build ./.. -v
 
 validate:
 	chmod +x $(SCRIPTS_PATH)/validate.sh
@@ -13,7 +16,12 @@ setup:
 	./$(SCRIPTS_PATH)/setup.sh
 
 host: validate
-	kubeadm init
+	./$(SCRIPTS_PATH)/setup.sh -t host
 
-join:
-	printf "Not ready to join a cluster yet"
+join: validate
+	./$(SCRIPTS_PATH)/setup.sh -t worker -H
+
+clean:
+	sudo apt purge -y docker-engine docker docker-ce docker-ce-cli
+	sudo apt autoremove -y --purge docker-engine docker docker-ce docker-ce-cli
+	sudo systemctl mask sleep.target suspend.target hibernate.target hybrid-sleep.target

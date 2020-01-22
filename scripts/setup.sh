@@ -19,6 +19,11 @@ JOIN_TOKEN_CERT_HASH=""
 # Functions
 
 fetch_dependencies() {
+  if [[ $(command -v kubectl) != "" || $(command -v kubelet -v) != "" || $(command -v kubeadm) != "" ]]; then
+    printf "Already fetched dependencies... \n"
+    return
+  fi
+
   apt-get update && apt-get install -y apt-transport-https curl \
       apt-transport-https ca-certificates curl software-properties-common gnupg2
   curl -s https://packages.cloud.google.com/apt/doc/apt-key.gpg | apt-key add -
@@ -42,28 +47,29 @@ install_verify_dependencies() {
       "storage-driver": "overlay2"
     }
 EOF
-  mkdir -p /etc/systemd/system/docker.service.d
+    mkdir -p /etc/systemd/system/docker.service.d
 
-  systemctl daemon-reload
-  systemcl restart docker
+    systemctl daemon-reload
+    systemcl restart docker
   fi
 
   if [[ $(command -v kubelet) == "" ]]; then
     printf "Setting up kubelet \n"
     apt install -y kubelet
+    apt-mark hold kubelet
   fi
 
   if [[ $(command -v kubeadm) == "" ]]; then
     printf "Setting up kubeadm \n"
     apt install kubeadm
+    apt-mark hold kubeadm
   fi
 
   if [[ $(command -v kubectl) == "" ]]; then
     printf "Setting up kubectl \n"
     apt install kubectl
+    apt-mark hold kubectl
   fi
-
-  apt-mark hold kubelet kubeadm kubectl
 }
 
 parse_args() {
@@ -83,7 +89,7 @@ parse_args() {
         CONTROL_PLANE_PORT=$2
         shift 2
         ;;
-      -J|--join_token)
+      -T|--token)
         JOIN_TOKEN=$2
         shift 2
         ;;
@@ -120,25 +126,31 @@ parse_args() {
     fi
 
     if [[ $JOIN_TOKEN == "" ]]; then
-      printf "No join_token provided, please set with --join_token (-J) \n"
+      printf "No join_token provided, please set with --token (-T) \n"
       exit 1
     fi
 
     if [[ $JOIN_TOKEN_CERT_HASH == "" ]]; then
-      printf "No join_token provided, please set with --token (-T) \n"
+      printf "No ca certificate hash provided provided, please set with --ca-cert (-C) \n"
       exit 1
     fi
+  elif [[ -z $TYPE ]]; then
+    printf "Options (-t) (-H) (-P) (-C) \n"
+    exit 1
   fi
 }
 
 setup_worker() {
   kubeadm join "$CONTROL_PLANE_IP":"$CONTROL_PLANE_PORT" --token "$JOIN_TOKEN" \
-    --discovery-token-ca-cert-hash sha256:"$JOIN_TOKEN_CERT_HASH"
+    --discovery-token-ca-cert-hash "$JOIN_TOKEN_CERT_HASH"
 }
 
 setup_host() {
   kubeadm config images pull
   kubeadm init
+
+  # install weave-works net plugin
+  kubectl apply -f "https://cloud.weave.works/k8s/net?k8s-version=$(kubectl version | base64 | tr -d '\n')"
 }
 
 setup() {
@@ -147,6 +159,9 @@ setup() {
     printf "Must set a value for -type (-t) : 'host' or 'worker' \n"
     exit 1
   fi
+
+  # disable sleep
+  systemctl mask sleep.target suspend.target hibernate.target hybrid-sleep.target
 
   case $TYPE in
     host)
