@@ -25,7 +25,7 @@ fetch_dependencies() {
   fi
 
   apt-get update && apt-get install -y apt-transport-https curl \
-      apt-transport-https ca-certificates curl software-properties-common gnupg2
+      apt-transport-https ca-certificates curl software-properties-common gnupg2 make
   curl -s https://packages.cloud.google.com/apt/doc/apt-key.gpg | apt-key add -
   cat <<EOF | tee /etc/apt/sources.list.d/kubernetes.list
   deb https://apt.kubernetes.io/ kubernetes-xenial main
@@ -34,6 +34,7 @@ EOF
 }
 
 install_verify_dependencies() {
+  swapoff -a
   if [[ $(command -v docker) == "" ]]; then
     printf "Setting up Docker \n"
     curl -sSL https://get.docker.com | sh
@@ -50,7 +51,9 @@ EOF
     mkdir -p /etc/systemd/system/docker.service.d
 
     systemctl daemon-reload
-    systemcl restart docker
+    systemctl restart docker
+
+    apt install -y docker-ce docker
   fi
 
   if [[ $(command -v kubelet) == "" ]]; then
@@ -61,13 +64,13 @@ EOF
 
   if [[ $(command -v kubeadm) == "" ]]; then
     printf "Setting up kubeadm \n"
-    apt install kubeadm
+    apt install -y kubeadm
     apt-mark hold kubeadm
   fi
 
   if [[ $(command -v kubectl) == "" ]]; then
     printf "Setting up kubectl \n"
-    apt install kubectl
+    apt install -y kubectl
     apt-mark hold kubectl
   fi
 }

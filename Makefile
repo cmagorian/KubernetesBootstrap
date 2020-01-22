@@ -22,6 +22,7 @@ join: validate
 	./$(SCRIPTS_PATH)/setup.sh -t worker -H
 
 clean:
+	kubeadm reset
 	sudo apt purge -y docker-engine docker docker-ce docker-ce-cli
 	sudo apt autoremove -y --purge docker-engine docker docker-ce docker-ce-cli
-	sudo systemctl mask sleep.target suspend.target hibernate.target hybrid-sleep.target
+	sudo systemctl unmask sleep.target suspend.target hibernate.target hybrid-sleep.target
