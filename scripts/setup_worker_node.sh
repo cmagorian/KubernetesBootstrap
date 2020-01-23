@@ -52,24 +52,26 @@ sudo update-alternatives --set ebtables /usr/sbin/ebtables-legacy
 
 apt update
 apt install -y apt-transport-https curl ca-certificates \
-  software-propertoes-common gnupg2 make
+  software-properties-common gnupg2 make
 
-curl -sSL https://get.docker.com | sh
-cat > /etc/docker/daemon.json <<EOF
-    {
-      "exec-opts": ["native.cgroupdriver=systemd"],
-      "log-driver": "json-file",
-      "log-opts": {
-        "max-size": "100m"
-      },
-      "storage-driver": "overlay2"
-    }
+if [[ $(command -v docker) == "" ]]; then
+  curl -sSL https://get.docker.com | sh
+  cat > /etc/docker/daemon.json <<EOF
+      {
+        "exec-opts": ["native.cgroupdriver=systemd"],
+        "log-driver": "json-file",
+        "log-opts": {
+          "max-size": "100m"
+        },
+        "storage-driver": "overlay2"
+      }
 EOF
-mkdir -p /etc/systemd/system/docker.service.d
+  mkdir -p /etc/systemd/system/docker.service.d
 
-systemctl daemon-reload
-systemctl restart docker
-apt install -y docker-ce
+  systemctl daemon-reload
+  systemctl restart docker
+  apt install -y docker-ce
+fi
 
 echo "###################################"
 echo "## Kubernetes dependencies       ##"
