@@ -1,5 +1,5 @@
 /*
-Copyright © 2020 NAME HERE <EMAIL ADDRESS>
+Copyright © 2020 Christopher Magorian <chrismagorian@gmail.com>
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -15,8 +15,26 @@ limitations under the License.
 */
 package main
 
-import "KubernetesBootstrap/cmd"
+import (
+	"KubernetesBootstrap/clientSession"
+	"fmt"
+)
 
 func main() {
-	cmd.Execute()
+	//cmd.Execute()
+	cs, err := clientSession.NewClientSession("root", "HugBug4401!.", "192.168.1.101")
+	if err != nil {
+		panic(err)
+	}
+
+	cs.SetCommands([]string{"cat /etc/hostname", "apt-get install -y kubectl"})
+
+	res, err := cs.RunCommands()
+	if err != nil {
+		panic(err)
+	}
+
+	for _, r := range res {
+		fmt.Println(r)
+	}
 }
