@@ -29,10 +29,16 @@ echo "###################################"
 echo "## Disabling swap permanently    ##"
 echo "###################################"
 
-dphys-swapfile swapoff
-dphys-swapfile uninstall
-update-rc.d dphys-swafile.service
-systemctl disable dphys-swapfile.service
+swapoff -a
+cat > /etc/init.d/swapdisable <<EOF
+  swapoff -a
+EOF
+chmod 755 /etc/init.d/swapdisable
+ln -s /etc/init.d/swapdisable /etc/rc1.d/S01swapdisable
+ln -s /etc/init.d/swapdisable /etc/rc2.d/S01swapdisable
+ln -s /etc/init.d/swapdisable /etc/rc3.d/S01swapdisable
+ln -s /etc/init.d/swapdisable /etc/rc4.d/S01swapdisable
+ln -s /etc/init.d/swapdisable /etc/rc5.d/S01swapdisable
 
 echo "###################################"
 echo "## Setup Docker + Util Deps      ##"
@@ -79,6 +85,10 @@ EOF
 fi
 
 printf "Dependencies ready for %s \n" "$(cat /etc/hostname)"
+
+echo "###################################"
+echo "## Setting up K8s Worker         ##"
+echo "###################################"
 
 kubeadm join --token "$TOKEN" --discovery-token-ca-cert-hash "$CACERT" --v=5
 
