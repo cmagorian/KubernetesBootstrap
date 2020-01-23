@@ -34,11 +34,11 @@ cat > /etc/init.d/swapdisable <<EOF
   swapoff -a
 EOF
 chmod 755 /etc/init.d/swapdisable
-ln -s /etc/init.d/swapdisable /etc/rc1.d/S01swapdisable
-ln -s /etc/init.d/swapdisable /etc/rc2.d/S01swapdisable
-ln -s /etc/init.d/swapdisable /etc/rc3.d/S01swapdisable
-ln -s /etc/init.d/swapdisable /etc/rc4.d/S01swapdisable
-ln -s /etc/init.d/swapdisable /etc/rc5.d/S01swapdisable
+ln -sfn /etc/init.d/swapdisable /etc/rc1.d/S01swapdisable
+ln -sfn /etc/init.d/swapdisable /etc/rc2.d/S01swapdisable
+ln -sfn /etc/init.d/swapdisable /etc/rc3.d/S01swapdisable
+ln -sfn /etc/init.d/swapdisable /etc/rc4.d/S01swapdisable
+ln -sfn /etc/init.d/swapdisable /etc/rc5.d/S01swapdisable
 
 echo "###################################"
 echo "## Setup Docker + Util Deps      ##"
@@ -80,6 +80,7 @@ if [[ $(command -v kubectl) == "" || $(command -v kubelet -v) == "" || $(command
   cat << EOF >> /etc/apt/sources.list.d/kubernetes.list
   deb https://apt.kubernetes.io/ kubernetes-xenial main
 EOF
+  apt update
   apt install -y kubelet kubeadm kubectl
   apt-mark hold kubelet kubeadm kubectl
 fi
