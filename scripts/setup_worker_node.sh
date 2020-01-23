@@ -4,6 +4,7 @@ set -euo pipefail
 
 TOKEN=""
 CACERT=""
+CP_ADDRESS=""
 
 # validate root permissions
 if [[ $EUID -ne 0 ]]; then
@@ -23,6 +24,13 @@ if [[ -z "${DISCOVERY_HASH}" ]]; then
   exit 1
 else
     CACERT="${DISCOVERY_HASH}"
+fi
+
+if [[ -z "${CONTROL_ADDRESS}" ]]; then
+  printf "Please set CONTROL_ADDRESS to the kube master active token \n"
+  exit 1
+else
+    CP_ADDRESS="${CONTROL_ADDRESS}"
 fi
 
 echo "###################################"
@@ -93,6 +101,6 @@ echo "###################################"
 echo "## Setting up K8s Worker         ##"
 echo "###################################"
 
-kubeadm join --token "$TOKEN" --discovery-token-ca-cert-hash "$CACERT" --v=5
+kubeadm join --token "$TOKEN" "$CP_ADDRESS" --discovery-token-ca-cert-hash "$CACERT" --v=5
 
 exit 0
