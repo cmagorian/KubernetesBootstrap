@@ -53,7 +53,7 @@ EOF
     systemctl daemon-reload
     systemctl restart docker
 
-    apt install -y docker-ce docker
+    apt install -y docker-ce docker docker-engine
   fi
 
   if [[ $(command -v kubelet) == "" ]]; then
@@ -138,7 +138,7 @@ parse_args() {
       exit 1
     fi
   elif [[ -z $TYPE ]]; then
-    printf "Options (-t) (-H) (-P) (-C) \n"
+    printf "Options (-t) (-H) (-P) (-T) (-C) \n"
     exit 1
   fi
 }

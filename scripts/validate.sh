@@ -3,7 +3,7 @@
 validate_environment() {
   OS=$(awk -F= '$1=="ID" { print $2 ;}' /etc/os-release)
   case $OS in
-    debian | ubuntu)
+    debian | ubuntu | raspbian)
       update-alternatives --set iptables /usr/sbin/iptables-legacy
       update-alternatives --set ip6tables /usr/sbin/ip6tables-legacy
       return
