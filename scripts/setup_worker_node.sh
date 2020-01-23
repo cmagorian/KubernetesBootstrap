@@ -2,10 +2,6 @@
 
 set -euo pipefail
 
-TOKEN=""
-CACERT=""
-CP_ADDRESS=""
-
 # validate root permissions
 if [[ $EUID -ne 0 ]]; then
    printf "This script must be run as root \n"
@@ -15,22 +11,16 @@ fi
 if [[ -z "${JOIN_TOKEN}" ]]; then
   printf "Please set JOIN_TOKEN to the kube master active token \n"
   exit 1
-else
-  TOKEN="${JOIN_TOKEN}"
 fi
 
 if [[ -z "${DISCOVERY_HASH}" ]]; then
-  printf "Please set JOIN_TOKEN to the kube master active token \n"
+  printf "Please set DISCOVERY_HASH to the kube master active token \n"
   exit 1
-else
-    CACERT="${DISCOVERY_HASH}"
 fi
 
 if [[ -z "${CONTROL_ADDRESS}" ]]; then
   printf "Please set CONTROL_ADDRESS to the kube master active token \n"
   exit 1
-else
-    CP_ADDRESS="${CONTROL_ADDRESS}"
 fi
 
 echo "###################################"
@@ -48,21 +38,26 @@ ln -sfn /etc/init.d/swapdisable /etc/rc3.d/S01swapdisable
 ln -sfn /etc/init.d/swapdisable /etc/rc4.d/S01swapdisable
 ln -sfn /etc/init.d/swapdisable /etc/rc5.d/S01swapdisable
 
+echo "Done (re)disabling swap permanently..."
+
 echo "###################################"
-echo "## Setup Docker + Util Deps      ##"
+echo "## Utility Dependencies          ##"
 echo "###################################"
 
 apt install -y iptables arptables ebtables
-sudo update-alternatives --set iptables /usr/sbin/iptables-legacy
-sudo update-alternatives --set ip6tables /usr/sbin/ip6tables-legacy
-sudo update-alternatives --set arptables /usr/sbin/arptables-legacy
-sudo update-alternatives --set ebtables /usr/sbin/ebtables-legacy
+update-alternatives --set iptables /usr/sbin/iptables-legacy
+update-alternatives --set ip6tables /usr/sbin/ip6tables-legacy
+update-alternatives --set arptables /usr/sbin/arptables-legacy
+update-alternatives --set ebtables /usr/sbin/ebtables-legacy
 
 apt update
 apt install -y apt-transport-https curl ca-certificates \
   software-properties-common gnupg2 make
 
 if [[ $(command -v docker) == "" ]]; then
+  echo "###################################"
+  echo "## Docker Dependencies           ##"
+  echo "###################################"
   curl -sSL https://get.docker.com | sh
   cat > /etc/docker/daemon.json <<EOF
       {
@@ -81,11 +76,10 @@ EOF
   apt install -y docker-ce
 fi
 
-echo "###################################"
-echo "## Kubernetes dependencies       ##"
-echo "###################################"
-
 if [[ $(command -v kubectl) == "" || $(command -v kubelet -v) == "" || $(command -v kubeadm) == "" ]]; then
+  echo "###################################"
+  echo "## Kubernetes dependencies       ##"
+  echo "###################################"
   curl -fsSL https://packages.cloud.google.com/apt/doc/apt-key.gpg | apt-key add -
   cat << EOF >> /etc/apt/sources.list.d/kubernetes.list
   deb https://apt.kubernetes.io/ kubernetes-xenial main
@@ -101,6 +95,6 @@ echo "###################################"
 echo "## Setting up K8s Worker         ##"
 echo "###################################"
 
-kubeadm join --token "$TOKEN" "$CP_ADDRESS" --discovery-token-ca-cert-hash "$CACERT" --v=5
+kubeadm join --token "${JOIN_TOKEN}" "${CONTROL_ADDRESS}" --discovery-token-ca-cert-hash "${DISCOVERY_HASH}" --v=5
 
 exit 0
