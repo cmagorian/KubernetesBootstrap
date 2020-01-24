@@ -3,10 +3,14 @@ SCRIPTS_PATH=scripts
 .PHONY: setup-host setup-worker clean
 
 setup-host:
+	chmod +x $(SCRIPTS_PATH)/validate.sh
+	./$(SCRIPTS_PATH)/validate.sh host
 	chmod +x $(SCRIPTS_PATH)/setup_rpi_master.sh
 	./$(SCRIPTS_PATH)/setup_rpi_master.sh
 
 setup-worker:
+	chmod +x $(SCRIPTS_PATH)/validate.sh
+	./$(SCRIPTS_PATH)/validate.sh worker
 	chmod +x $(SCRIPTS_PATH)/setup_worker_node.sh
 	./$(SCRIPTS_PATH)/setup_worker_node.sh
 
