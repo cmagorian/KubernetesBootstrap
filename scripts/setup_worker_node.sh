@@ -29,6 +29,7 @@ echo "###################################"
 
 swapoff -a
 cat > /etc/init.d/swapdisable <<EOF
+  #!/bin/bash
   swapoff -a
 EOF
 chmod 755 /etc/init.d/swapdisable

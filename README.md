@@ -12,17 +12,13 @@ machines or VMs that can access each other.
 Use the following `Makefile` targets to leverage the functions
 of this repository:
 
-    make setup
+    make setup-worker
 
-This setups the dependencies conditionally based on your
-current operating system.
+This sets up the node as a worker given that you have populated the `JOIN_TOKEN` 
+`DISCOVERY_HASH` and `CONTROL_ADDRESS` arguments with the values received from
+setting up the control-plane node (master).
 
-    make host
+    make setup-host
 
 This generates a host cluster and assigns the given machine
-to manage the cluster as the `kube controller`.
-
-    make join
-
-This generates and joins a machine to a given host controller
-at the IPv4 (or hostname) provided.
+to manage the cluster as the `master`.

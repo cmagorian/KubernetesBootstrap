@@ -1,25 +1,14 @@
 SCRIPTS_PATH=scripts
 
-.PHONY: validate setup host clean
+.PHONY: setup-host setup-worker clean
 
-all: validate setup
+setup-host:
+	chmod +x $(SCRIPTS_PATH)/setup_rpi_master.sh
+	./$(SCRIPTS_PATH)/setup_rpi_master.sh
 
-build:
-	go build ./.. -v
-
-validate:
-	chmod +x $(SCRIPTS_PATH)/validate.sh
-	./$(SCRIPTS_PATH)/validate.sh
-
-setup:
-	chmod +x $(SCRIPTS_PATH)/setup.sh
-	./$(SCRIPTS_PATH)/setup.sh
-
-host: validate
-	./$(SCRIPTS_PATH)/setup.sh -t host
-
-join: validate
-	./$(SCRIPTS_PATH)/setup.sh -t worker -H
+setup-worker:
+	chmod +x $(SCRIPTS_PATH)/setup_worker_node.sh
+	./$(SCRIPTS_PATH)/setup_worker_node.sh
 
 clean:
 	kubeadm reset
