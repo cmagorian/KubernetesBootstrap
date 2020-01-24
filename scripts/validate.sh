@@ -31,7 +31,7 @@ if [[ "$1" == "worker" ]]; then
     exit 1
   fi
 
-  if [[ -z "${CONTROL_PLANE}" ]]; then
+  if [[ -z "${CONTROL_ADDRESS}" ]]; then
     echo "You are missing the CONTROL_PLANE environment variables as root, please"
     echo "set tot continue with deployment as a worker..."
     exit 1
