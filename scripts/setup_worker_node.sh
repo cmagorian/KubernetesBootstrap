@@ -31,8 +31,8 @@ swapoff -a
 cat > /etc/init.d/swapdisable <<EOF
   #!/bin/bash
   swapoff -a
-  sed -i.bak -r 's/(.+ swap .+)/#\1/' /etc/fstab
 EOF
+sed -i.bak -r 's/(.+ swap .+)/#\1/' /etc/fstab
 chmod 755 /etc/init.d/swapdisable
 ln -sfn /etc/init.d/swapdisable /etc/rc1.d/S01swapdisable
 ln -sfn /etc/init.d/swapdisable /etc/rc2.d/S01swapdisable
