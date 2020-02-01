@@ -43,6 +43,22 @@ ln -sfn /etc/init.d/swapdisable /etc/rc5.d/S01swapdisable
 echo "Done (re)disabling swap permanently..."
 
 echo "###################################"
+echo "## Enabling WOL permanently      ##"
+echo "###################################"
+
+/sbin/ethtool -s enp1s0 wol g
+
+if grep -q "wol g" /etc/network/interfaces
+then
+  printf "Already enabled WOL on %s \n" "$(cat /etc/hostname)"
+else
+  sed -i '/iface enp1s0 inet dhcp/ a \ \ /sbin/ethtool -s enp1s0 wol g' /etc/network/interfaces
+  echo "Enabled WOL for enp1s0!"
+fi
+
+#iface enp1s0 inet dhcp
+
+echo "###################################"
 echo "## Utility Dependencies          ##"
 echo "###################################"
 
